@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { products } from '../data/products';
 import { SmartVectorDB } from '../lib/vectorDb';
 import { matchesFilters } from '../lib/filters';
@@ -26,7 +27,7 @@ export default function EngineeringPage() {
 
   return (
     <div className="pd-wrap">
-      <div className="breadcrumb"><a href="/">Home</a> › <span>Engineering</span></div>
+      <div className="breadcrumb"><Link to="/">Home</Link> › <span>Engineering</span></div>
       <h1 className="sec-ttl">⚙️ Frontend Engineering Metrics</h1>
       <p className="sec-sub" style={{ marginBottom: 20 }}>
         Live measurements from <strong>this browser session</strong> — search latency, filter throughput,

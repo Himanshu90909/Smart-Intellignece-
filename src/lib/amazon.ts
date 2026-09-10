@@ -2,9 +2,8 @@
  * Client for the amazonLive backend function (Base44).
  * The RapidAPI key stays server-side; this module only speaks to our proxy.
  */
-const API_BASE =
-  import.meta.env.VITE_AMAZON_API ||
-  'https://solene-7c76de54.base44.app/functions/amazonLive';
+const API_BASE = import.meta.env.VITE_AMAZON_API || '/api/amazonLive';
+const REQUEST_TIMEOUT_MS = 15_000;
 
 export interface AmazonLiveDetails {
   asin: string;
@@ -44,9 +43,26 @@ export interface AmazonLiveResult {
 }
 
 async function callApi(params: string): Promise<unknown> {
-  const res = await fetch(`${API_BASE}?${params}`);
-  const data = await res.json();
-  if (!res.ok) throw new Error((data as { error?: string }).error || `API error ${res.status}`);
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}?${params}`, { signal: controller.signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error('The live data request timed out. Please try again.');
+    }
+    throw new Error('Unable to reach the live data service. Check your connection and try again.');
+  } finally {
+    window.clearTimeout(timeout);
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message = (data as { error?: string }).error;
+    if (res.status === 429) throw new Error('The live data service is busy. Please wait a moment and retry.');
+    if (res.status === 404) throw new Error('The live data endpoint is not available in this deployment.');
+    throw new Error(message || `Live data request failed (${res.status}).`);
+  }
   return data;
 }
 

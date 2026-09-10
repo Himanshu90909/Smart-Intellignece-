@@ -6,11 +6,14 @@
  */
 export default async function (req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const key = process.env.RAPIDAPI_KEY;
   if (!key) {
-    return res.status(500).json({ error: 'RAPIDAPI_KEY is not configured' });
+    return res.status(503).json({ error: 'Live data is not configured for this deployment.' });
   }
 
   const mode = (req.query.mode || req.body?.mode || 'details').toString();
@@ -28,16 +31,19 @@ export default async function (req, res) {
   }
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
     const r = await fetch(url, {
+      signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
         'x-rapidapi-host': 'real-time-amazon-data.p.rapidapi.com',
         'x-rapidapi-key': key,
       },
-    });
-    const data = await r.json();
+    }).finally(() => clearTimeout(timeout));
+    const data = await r.json().catch(() => ({}));
     if (!r.ok) {
-      return res.status(r.status).json({ error: 'Upstream API error', detail: data });
+      return res.status(r.status === 429 ? 429 : 502).json({ error: r.status === 429 ? 'Live data service is busy. Please retry shortly.' : 'Live data service failed to respond.' });
     }
 
     // Normalize: strip heavy/irrelevant fields so the client payload stays small
@@ -83,6 +89,6 @@ export default async function (req, res) {
     };
     return res.json({ status: 'OK', mode, country, details });
   } catch (e) {
-    return res.status(502).json({ error: 'Failed to reach Amazon data API', detail: String(e) });
+    return res.status(502).json({ error: e?.name === 'AbortError' ? 'Live data request timed out.' : 'Failed to reach live data service.' });
   }
 }

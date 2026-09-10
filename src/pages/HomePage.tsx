@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Product } from '../types';
 import { SmartVectorDB } from '../lib/vectorDb';
 import { formatPrice } from '../lib/format';
@@ -33,13 +33,13 @@ function Rail({ title, subtitle, items, onAdd }: {
       <div className="rail">
         {items.map(({ product: p, reason }) => (
           <article key={p.id} className="pc">
-            <a href={`/product/${p.id}`} className="pc-img" aria-label={`View ${p.name}`}>
+            <Link to={`/product/${p.id}`} className="pc-img" aria-label={`View ${p.name}`}>
               <LazyImage src={p.image} alt={p.name} />
-            </a>
+            </Link>
             <div className="pc-body">
               <div className="pc-brand">{p.brand}</div>
               <h3 className="pc-name" style={{ fontSize: 14, fontWeight: 600, minHeight: 38, margin: '3px 0 6px' }}>
-                <a href={`/product/${p.id}`} style={{ color: 'inherit' }}>{p.name}</a>
+                <Link to={`/product/${p.id}`} style={{ color: 'inherit' }}>{p.name}</Link>
               </h3>
               <div className="pc-price"><span className="pp-main">{formatPrice(p.price)}</span></div>
               <div className="rec-reason">{reason}</div>
@@ -86,7 +86,7 @@ export default function HomePage({ vdb, products }: { vdb: SmartVectorDB; produc
             </p>
             <div className="hero-btns">
               <a href="#ai-panel" className="btn-primary">Try AI Search ✨</a>
-              <a href="/catalog?tag=deal" className="btn-ghost">Today's Deals ⚡</a>
+              <Link to="/catalog?tag=deal" className="btn-ghost">Today's Deals ⚡</Link>
             </div>
           </div>
           <div className="hero-stats">
@@ -141,12 +141,12 @@ export default function HomePage({ vdb, products }: { vdb: SmartVectorDB; produc
                   return (
                     <div className="sim-card" key={p.id}>
                       <div className="sim-card-img">
-                        <a href={`/product/${p.id}`}><LazyImage src={p.image} alt={p.name} /></a>
+                        <Link to={`/product/${p.id}`}><LazyImage src={p.image} alt={p.name} /></Link>
                         <div className="sim-pct">{pct}%</div>
                       </div>
                       <div className="sim-card-body">
                         <div className="sim-card-brand">{p.brand}</div>
-                        <a href={`/product/${p.id}`} className="sim-card-name" style={{ color: 'inherit', display: 'block' }}>{p.name}</a>
+                        <Link to={`/product/${p.id}`} className="sim-card-name" style={{ color: 'inherit', display: 'block' }}>{p.name}</Link>
                         <div className="sim-bar"><div className="sim-bar-fill" style={{ width: `${pct}%` }} /></div>
                         <div className="sim-price">{formatPrice(p.price)}</div>
                         <button className="sim-atc" onClick={() => addToCart(p)}>Add to Cart</button>

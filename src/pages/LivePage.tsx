@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { fetchAmazonDetails, searchAmazon } from '../lib/amazon';
 import type { AmazonLiveDetails, AmazonLiveResult } from '../lib/amazon';
 import { SkeletonCard, EmptyState, ErrorState, LazyImage } from '../components/ui/primitives';
@@ -52,7 +53,7 @@ export default function LivePage() {
   return (
     <div className="pd-wrap">
       <div className="breadcrumb">
-        <a href="/">Home</a> › <span>Live Amazon Data</span>
+        <Link to="/">Home</Link> › <span>Live Amazon Data</span>
       </div>
 
       <div className="ai-box" style={{ marginBottom: 24 }}>

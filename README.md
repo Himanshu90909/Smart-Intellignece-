@@ -1,130 +1,119 @@
-# 🧠 Smart Intelligence — AI Product Discovery & Intelligent Shopping Platform
+# Smart Intelligence
 
-A production-grade **React + TypeScript** commerce discovery app that runs a real **TF-IDF vector database with cosine similarity entirely in the browser** — natural-language search, explainable recommendations, and an AI comparison verdict with zero black-box APIs.
+Smart Intelligence is a React + TypeScript product-discovery application built around a real, deterministic in-browser search engine. It combines TF-IDF indexing and cosine similarity with natural-language filter parsing, explainable recommendations, product comparison, cart/wishlist persistence, and an optional live Amazon-data integration.
 
-**🔴 Live:** https://smart-intelligence-himanshu90909s-projects.vercel.app
+The project is intentionally honest about its boundaries: the bundled catalog is static, the local search engine is not a generative model, and the live Amazon route requires a server-side `RAPIDAPI_KEY`.
 
----
+## What is implemented
 
-## ✨ Feature Highlights
+- Natural-language product search such as `white running shoes under ₹3000`.
+- URL-synchronized category, brand, price, rating, discount, color, material, availability, sort, and pagination state.
+- Deterministic TF-IDF + cosine search with a graceful facet-relaxation path when exact catalog facets have no matches.
+- Recommendation rails whose reasons are derived from product attributes rather than invented metrics.
+- Product details, quick view, compare up to four products, AI comparison verdicts, wishlist, recently viewed items, and optimistic cart updates.
+- Responsive navigation and mobile filter drawer with semantic controls and keyboard-friendly modal/drawer behavior.
+- Lazy-loaded route chunks for Catalog, Product, Compare, Live, and Engineering pages.
+- Optional live Amazon search/details through `/api/amazonLive`; the RapidAPI key remains server-side.
+- Engineering page with measurements taken in the current browser session: vector build, search/filter timings, Web Vitals when available, navigation timing, and downloaded resource sizes.
 
-| Area | What it does |
-| --- | --- |
-| **Vector search** | TF-IDF embeddings over the full 300-product catalog, cosine ranking, matched-term explanations, debounced suggestions with full keyboard navigation (`↑ ↓ Enter Esc`) and recent-search history |
-| **Ask Smart Intelligence** | Natural-language queries — *"white running shoes under ₹3000"* — parsed into **real, visible filters** (category, brand, color, material, price, rating) with an interpretation panel. If a facet matches nothing in the catalog, it degrades honestly to vector ranking instead of showing a fake result |
-| **Smart filtering** | Category, brand, min/max price, rating, discount %, color, material, availability — all multi-select, all synchronized with URL query params (shareable filter URLs) |
-| **Honest recommendations** | Trending / Best Value / Highly Rated / Similar / Recently Viewed rails, each shipping a reason built from real product attributes |
-| **AI comparison** | 2–4 products → winner per row + **AI Verdict** (Best Overall / Best Value / Best Rated / Best Budget) with data-driven "Why?" — never invents missing specs |
-| **Optimistic cart** | Instant UI response, count updates immediately, persistence failure **rolls back state** and surfaces a toast |
-| **Quick View** | Accessible modal (focus trap, Esc) — preview, quantity, add to cart, wishlist, compare without leaving the grid |
-| **Live Amazon data** | `/live` pulls real products from the Real-Time Amazon Data API through a serverless proxy — the API key never reaches the client |
-| **Engineering dashboard** | `/engineering` — live-measured metrics: vector build time, search latency, filter throughput, Web Vitals (LCP/CLS/long tasks) and actual downloaded bundle sizes |
+## Frontend Engineering Architecture
 
-## 🏗️ Architecture
+The application is layered so that UI, business logic, persistence, and external data boundaries remain independently replaceable.
 
-```mermaid
-flowchart TD
-    U[User] --> S[SearchBar / Ask Smart Intelligence]
-    S --> NL[NL Parser → real Filters + residual query]
-    U --> F[FilterPanel URL-synced]
-    NL --> C[Catalog State]
-    F --> C
-    C --> V[SmartVectorDB — TF-IDF + cosine, in-browser]
-    C --> FL[matchesFilters / applySorting / paginate]
-    V --> GRID[Product Grid — memoized ProductCards]
-    FL --> GRID
-    GRID --> RC[Recommendation Engine — attribute-based reasons]
-    GRID --> CMP[Comparison — pairwise similarity + AI Verdict]
-    GRID --> CTX[Cart / Wishlist / Compare stores — Context + localStorage]
-    CTX --> CT[Optimistic UI with rollback]
-    GRID -.on demand.-> LIVE[LivePage → serverless Amazon proxy]
-```
+| Layer | Responsibility | Examples |
+| --- | --- | --- |
+| Routes/pages | Compose user journeys and route-level loading | `src/pages`, `src/App.tsx` |
+| Reusable UI | Cards, drawers, modals, empty/error/loading states | `src/components` |
+| Domain logic | Search, parsing, filters, recommendations, verdicts | `src/lib` |
+| State | Small shared client state persisted to localStorage | `src/store` |
+| Data boundary | Typed live-data client and server-side proxy | `src/lib/amazon.ts`, `functions/amazonLive.js` |
+| Static data | Bundled product catalog and derived facets | `src/data` |
 
-```
-src/
-├── data/          products.ts, products.json (300-item catalog)
-├── lib/           vectorDb.ts (TF-IDF engine) · nlQuery.ts (NL parser + honest fallback)
-│                  filters.ts · facets.ts · recommend.ts · verdict.ts
-│                  metrics.ts (live measurements) · format.ts · amazon.ts
-├── store/         cart.tsx (optimistic + rollback) · appStore.tsx · toast.tsx · cartConstants.ts
-├── components/    ui/ (primitives, Modal, Drawer) · product/ (ProductCard, QuickView,
-│                  FilterPanel, Toolbar) · search/ · layout/ · cart/ · compare/
-├── pages/         Home · Catalog · Product · Compare · Live · Engineering
-└── hooks/         useDebounce.ts
-functions/
-└── amazonLive.ts  serverless proxy (search + product details by ASIN, CORS, key server-side)
-```
+### Routing strategy
 
-### Search architecture
-1. Input debounced 200 ms → instant suggestions from the vector DB
-2. Submit → `?q=` written to the URL (shareable, restorable)
-3. `parseNL()` extracts **hard filters** (price, rating, brand, category) and a residual keyword query
-4. `SmartVectorDB.search()` ranks with cosine similarity through the filter predicate
-5. Facets that match nothing degrade to query terms — the UI says so explicitly. **No invented products.**
-
-### Recommendation logic
-Strictly attribute-based: every rail computes from real price/rating/review/category/tag data and emits a human-readable reason ("4.6★ rated, 34% off, matches your viewed running shoes"). Deterministic and unit-tested.
+React Router provides client-side navigation without full page reloads. Internal links use `Link`/`NavLink`; route-level `lazy` imports keep feature chunks out of the initial bundle. Vercel rewrites apply only to non-API paths so `/api/amazonLive` is not swallowed by the SPA fallback.
 
 ### State management
-Lightweight React Context + localStorage (cart, wishlist, compare, recently-viewed, search history). No Redux — the app's state is small, client-only, and persistence needs are simple; the trade-off is documented in interviews.
 
-## ⚡ Performance (measured, not claimed)
+Local React state handles page-local form and loading state. A small Context layer handles cart, wishlist, comparison, recents, and search history because those slices are shared across routes and need persistence. Redux or another state library would add dependency and API surface without solving a current problem.
 
-Lighthouse on a production build (local preview, headless Chromium):
+### API architecture
 
-| Metric | Result |
-| --- | --- |
-| Performance | **99 / 100** |
-| Accessibility | **100 / 100** |
-| Best Practices | 96 / 100 |
-| SEO | **100 / 100** |
-| LCP / FCP | 1.7 s / 1.7 s |
-| Total Blocking Time | 50 ms |
-| Cumulative Layout Shift | 0.016 |
+The browser talks only to the same-origin `/api/amazonLive` route by default. `src/lib/amazon.ts` centralizes query construction, response parsing, timeout handling, and user-safe errors. The proxy validates the request mode, keeps `RAPIDAPI_KEY` on the server, bounds upstream request time, normalizes payloads, and does not expose upstream error bodies or stack traces. A custom `VITE_AMAZON_API` can be supplied for a separately hosted compatible proxy; it must not contain secrets.
 
-How it gets there:
-- Route-level code splitting (Catalog 22 KB, Product 5.5 KB, Compare 6.7 KB, Live 7.3 KB gzipped ~2–7 KB each)
-- Memoized `ProductCard` — flipping cart/compare state doesn't re-render 300 cards
-- Facet counts and NL parses memoized per data set; filtering runs once per URL change
-- Lazy images with fixed dimensions (CLS 0.016); skeleton loaders, no blank UI
-- Debounced search; 250 ms simulated network latency keeps loading states honest
-- Pagination bounds DOM size — no virtualization needed at 300 items (trade-off documented)
+### Reusable component library
 
-Live numbers re-measured on every visit at **/engineering**.
+Shared primitives include lazy images with fallback, skeleton cards, empty state, error state, modal, drawer, product cards, filter controls, toolbar, pagination, and navigation components. Components use semantic HTML, visible focus styling, labels, roles where needed, and explicit retry/reset actions.
 
-## 🧪 Testing
+### Accessibility and responsive design
+
+The UI uses heading hierarchy, labelled form controls, keyboard-operable buttons and links, focus-visible outlines, `aria-live`/alert states where appropriate, and focus-managed overlays. The layout uses responsive grids and a mobile filter drawer rather than relying on desktop-only sidebars. Images have meaningful alt text and fixed aspect-ratio containers to reduce layout movement.
+
+### Performance decisions
+
+Route-level code splitting, lazy image loading, bounded pagination, debounced search suggestions, and a single memoized vector index keep work proportional to the current interaction. The catalog is only a few hundred records, so pagination is simpler and more maintainable than virtualization. The Engineering page reports runtime measurements instead of publishing unverified performance claims.
+
+## Technology Tradeoffs
+
+React was selected because the app benefits from composable components, predictable state boundaries, and a mature testing ecosystem. Its tradeoffs are additional client-side JavaScript and the need to manage effect/lifecycle boundaries carefully; route splitting and focused Context usage address those costs.
+
+jQuery is not used in React-controlled UI. Direct DOM manipulation would compete with React's rendering model and create two sources of truth. jQuery can still be reasonable in a legacy page or a plugin ecosystem that owns its DOM, but it would not add value here.
+
+Third-party libraries are kept deliberately small: React Router provides routing, Vitest and Testing Library provide tests, and Playwright covers browser flows. Each dependency adds bundle, maintenance, and upgrade cost, so no UI framework, Redux store, chart library, or artificial keyword dependency was added without a current product need.
+
+## Testing
 
 ```bash
-npm test              # 35 Vitest unit tests — vector engine, NL parser, facets,
-                      # filters, recommendations, verdict, formatters, cart bounds
-npx playwright test   # 4 E2E flows (production build via vite preview)
-npm run build         # tsc -b strict + vite build
+npm install
+npm test
+npm run build
+npm run test:e2e
 ```
 
-E2E flows test real user behavior:
-1. Catalog → search "running shoes" → price filter → results respect the cap
-2. Product → add to cart → cart drawer shows the product
-3. Two products → compare → table + AI Verdict render
-4. NL search "white shoes under ₹3000" → interpreted filters shown → price cap enforced
+Unit tests cover vector ranking, filters, pagination, formatting, recommendations, and comparison verdict logic. Playwright covers catalog search/filtering, product-to-cart flow, comparison, and natural-language interpretation. The E2E config starts Vite preview; run `npm run build` before `npm run test:e2e` when executing it directly.
 
-## ♿ Accessibility
+## Local development
 
-- Semantic HTML, heading hierarchy, ARIA only where necessary
-- Full keyboard shopping: combobox search with `aria-expanded`/`role=listbox`, focus-trapped modal and drawers, visible focus states
-- Accessible names contain visible text (axe-clean); WCAG-AA palette (verified by Lighthouse 100/100)
+```bash
+npm install
+npm run dev
+```
 
-## 🚀 Deployment
+The local catalog and all core shopping features work without external credentials. To enable live Amazon data, configure `RAPIDAPI_KEY` as a server-side Vercel environment variable. Do not put it in a `VITE_*` variable. The frontend can point to another compatible proxy with `VITE_AMAZON_API`, but the default is the same-origin `/api/amazonLive` route.
 
-- **Frontend:** Vercel — Vite SPA with `vercel.json` rewrites for deep links
-- **Live-data proxy:** serverless function keeps `RAPIDAPI_KEY` server-side
+## Deployment
 
-## 🔭 Future Improvements
+The project is Vercel-ready:
 
-- Sync cart/wishlist to a backend for cross-device persistence
-- Virtualized grid if the catalog grows past a few thousand items
-- Worker-side vector search for >1k products (keeps the main thread free)
-- i18n and INR/USD currency switching
+1. Import the repository into Vercel.
+2. Use the standard Vite build command (`npm run build`) and output directory (`dist`).
+3. Add `RAPIDAPI_KEY` only if live Amazon data is required.
+4. Deploy and verify `/`, `/catalog`, `/compare`, `/live`, and `/engineering`.
+5. Confirm that the live route returns a user-safe configuration error when the secret is intentionally absent, rather than a stack trace.
 
-## 📄 License
+## Amazon Front-End Engineer Internship Skill Mapping
+
+| Requirement | Evidence in this project |
+| --- | --- |
+| JavaScript / TypeScript | React application logic, typed domain models, deterministic search algorithms |
+| HTML / CSS | Semantic controls, responsive CSS design system, accessible overlays and forms |
+| React | Component architecture, Context, hooks, route-level lazy loading |
+| Reusable UX components | Product cards, primitives, drawers, modals, filter controls, pagination, feedback states |
+| REST API integration | Centralized Amazon client, timeout/error handling, server-side proxy |
+| UX patterns | Loading, error, empty, retry, reset, search, filter, sort, pagination, compare, cart feedback |
+| Scalable frontend | Separate pages/components/lib/store/data layers and typed boundaries |
+| Testing | Vitest unit tests and React Testing Library dependencies |
+| Automated browser testing | Playwright critical user flows |
+| Library evaluation | Documented React, jQuery, state, and dependency tradeoffs |
+| Operational excellence | Build validation, safe errors, secret boundary, SPA/API routing separation |
+| CS fundamentals | TF-IDF indexing, cosine similarity, filtering, pagination, deterministic ranking |
+
+This mapping describes implemented evidence; it is not a claim of guaranteed job matching or interview selection.
+
+## Known limitations
+
+The bundled product catalog is static and client-side. Cross-device accounts, server-backed cart synchronization, authentication, and a persistent analysis history are not implemented. Live Amazon results depend on a third-party API, its quota, and a configured server-side key. The app does not claim a generative AI model for local search; its explainability comes from transparent ranking and product attributes.
+
+## License
 
 MIT

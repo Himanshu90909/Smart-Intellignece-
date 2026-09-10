@@ -33,9 +33,10 @@ function json(body: unknown, status = 200): Response {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS_HEADERS });
+  if (req.method !== "GET") return json({ error: "Method not allowed" }, 405);
 
   const key = Deno.env.get("RAPIDAPI_KEY") as string;
-  if (!key) return json({ error: "RAPIDAPI_KEY is not configured" }, 500);
+  if (!key) return json({ error: "Live data is not configured for this deployment." }, 503);
 
   let mode = "details", country = "US", asin = "", query = "";
   try {
@@ -63,16 +64,19 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
     const upstream = await fetch(apiUrl, {
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         "x-rapidapi-host": "real-time-amazon-data.p.rapidapi.com",
         "x-rapidapi-key": key,
       },
-    });
-    const data = await upstream.json();
+    }).finally(() => clearTimeout(timeout));
+    const data = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
-      return json({ error: "Upstream API error", detail: data }, upstream.status);
+      return json({ error: upstream.status === 429 ? "Live data service is busy. Please retry shortly." : "Live data service failed to respond." }, upstream.status === 429 ? 429 : 502);
     }
 
     if (mode === "search") {
@@ -121,6 +125,6 @@ Deno.serve(async (req) => {
       },
     });
   } catch (e) {
-    return json({ error: "Failed to reach Amazon data API", detail: String(e) }, 502);
+    return json({ error: e instanceof DOMException && e.name === "AbortError" ? "Live data request timed out." : "Failed to reach live data service." }, 502);
   }
 });
