@@ -1,0 +1,184 @@
+<body>
+
+<header>
+ <div class="h-wrap">
+  <div class="logo" onclick="filterCat('all')">
+   <div class="logo-icon">🧠</div>
+   <div><div class="logo-text">Smart Intelligence</div><div class="logo-sub">AI Shopping</div></div>
+  </div>
+  <div class="searchbar">
+   <input class="s-inp" id="sInp" placeholder="Search products with Vector AI..." onkeydown="if(event.key==='Enter')doSearch()"/>
+   <button class="s-btn" onclick="doSearch()">🔍</button>
+  </div>
+  <div class="h-actions">
+   <button class="hbtn" onclick="toggleCompareBar()">⚖️ Compare</button>
+   <button class="hbtn cart-btn" onclick="openCart()">
+    🛒 Cart
+    <span class="cart-cnt" id="cCnt">0</span>
+   </button>
+  </div>
+ </div>
+ <nav class="h-nav">
+  <div class="h-nav-inner">
+   <button class="nb act" onclick="filterCat('all',this)">All</button>
+   <button class="nb" onclick="filterCat('clothes',this)">👔 Clothes</button>
+   <button class="nb" onclick="filterCat('electronics',this)">📱 Electronics</button>
+   <button class="nb" onclick="filterCat('shoes',this)">👟 Shoes</button>
+   <button class="nb" onclick="filterCat('furniture',this)">🪑 Furniture</button>
+   <button class="nb" onclick="filterCat('beauty',this)">💄 Beauty</button>
+   <button class="nb" onclick="filterCat('books',this)">📚 Books</button>
+   <button class="nb" onclick="filterCat('sports',this)">⚽ Sports</button>
+   <button class="nb" onclick="filterCat('toys',this)">🧸 Toys</button>
+   <button class="nb" onclick="filterCat('grocery',this)">🛒 Grocery</button>
+   <button class="nb" onclick="filterCat('automotive',this)">🚗 Automotive</button>
+   <button class="nb" style="color:var(--accent3)" onclick="scrollToAI()">✨ AI Search</button>
+  </div>
+ </nav>
+</header>
+
+<div class="hero">
+ <div class="hero-inner">
+  <div class="hero-txt">
+   <div class="eyebrow"><span class="eyebrow-dot"></span>VECTOR DATABASE AI ENGINE</div>
+   <h1>Shopping <span class="hl">Smarter</span><br>Than Ever Before</h1>
+   <p>Smart Intelligence uses a local TF-IDF vector database with cosine similarity to understand exactly what you're looking for — no Claude API, fully on-device AI.</p>
+   <div class="hero-btns">
+    <button class="btn-primary" onclick="scrollToAI()">Try AI Search ✨</button>
+    <button class="btn-ghost" onclick="filterCat('deal')">Today's Deals ⚡</button>
+   </div>
+  </div>
+  <div class="hero-stats">
+   <div class="hstat"><div class="hstat-n">300+</div><div class="hstat-l">Products</div></div>
+   <div class="hstat"><div class="hstat-n">10</div><div class="hstat-l">Categories</div></div>
+   <div class="hstat"><div class="hstat-n">TF-IDF</div><div class="hstat-l">Vector DB</div></div>
+   <div class="hstat"><div class="hstat-n">100%</div><div class="hstat-l">On-Device</div></div>
+  </div>
+ </div>
+</div>
+
+<!-- AI SEARCH PANEL -->
+<div class="ai-panel" id="aiPanel">
+ <div class="ai-title"><span class="ai-icon">🧠</span><h2>Smart Intelligence Search</h2><span class="ai-badge">LOCAL AI</span></div>
+ <p class="ai-sub">On-device TF-IDF vector embeddings + cosine similarity — no external API. Finds perfect matches using semantic understanding.</p>
+ <div class="ai-chips">
+  <div class="ai-chip" onclick="vsQuick(this.textContent)">Best running shoes for fitness</div>
+  <div class="ai-chip" onclick="vsQuick(this.textContent)">Wireless earphones for music</div>
+  <div class="ai-chip" onclick="vsQuick(this.textContent)">Formal clothes office wear</div>
+  <div class="ai-chip" onclick="vsQuick(this.textContent)">Anti-aging skincare beauty</div>
+  <div class="ai-chip" onclick="vsQuick(this.textContent)">Kids educational toys</div>
+  <div class="ai-chip" onclick="vsQuick(this.textContent)">Organic healthy grocery</div>
+  <div class="ai-chip" onclick="vsQuick(this.textContent)">Car safety accessories</div>
+  <div class="ai-chip" onclick="vsQuick(this.textContent)">Bedroom modern furniture</div>
+ </div>
+ <div class="ai-inp-row">
+  <input class="ai-inp" id="vsInp" placeholder="Describe what you want — e.g. 'lightweight running shoes under budget', 'premium skincare glow'..." onkeydown="if(event.key==='Enter')vectorSearch()"/>
+  <button class="ai-go-btn" onclick="vectorSearch()">Find with AI →</button>
+ </div>
+ <div id="simResults"></div>
+</div>
+
+<div class="page-layout">
+ <aside class="sidebar">
+  <div class="sb-sec">
+   <h3>Category</h3>
+   <label class="filter-item"><input type="checkbox" checked id="fa"> All</label>
+   <label class="filter-item"><input type="checkbox"> Clothes</label>
+   <label class="filter-item"><input type="checkbox"> Electronics</label>
+   <label class="filter-item"><input type="checkbox"> Shoes</label>
+   <label class="filter-item"><input type="checkbox"> Furniture</label>
+   <label class="filter-item"><input type="checkbox"> Beauty</label>
+   <label class="filter-item"><input type="checkbox"> Books</label>
+   <label class="filter-item"><input type="checkbox"> Sports</label>
+   <label class="filter-item"><input type="checkbox"> Toys</label>
+   <label class="filter-item"><input type="checkbox"> Grocery</label>
+   <label class="filter-item"><input type="checkbox"> Automotive</label>
+  </div>
+  <div class="sb-sec">
+   <h3>Price</h3>
+   <input type="range" class="price-slider" min="0" max="10000" value="10000" step="100" oninput="document.getElementById('pv').textContent='₹'+Number(this.value).toLocaleString();filterByPrice(this.value)">
+   <div class="price-vals"><span>₹0</span><span id="pv">₹10,000</span></div>
+  </div>
+  <div class="sb-sec">
+   <h3>Rating</h3>
+   <div class="rating-row" onclick="filterRating(4.5)"><span class="stars">★★★★★</span> 4.5+</div>
+   <div class="rating-row" onclick="filterRating(4)"><span class="stars">★★★★</span> 4.0+</div>
+   <div class="rating-row" onclick="filterRating(3)"><span class="stars">★★★</span> 3.0+</div>
+   <div class="rating-row" onclick="filterRating(0)">All Ratings</div>
+  </div>
+  <div class="sb-sec">
+   <h3>Brands</h3>
+   <div id="brandTags"></div>
+  </div>
+ </aside>
+
+ <main class="main">
+  <div class="chips-row">
+   <div class="chip act" onclick="filterCat('all',null,this)">🛍️ All</div>
+   <div class="chip" onclick="filterCat('clothes',null,this)">👔 Clothes</div>
+   <div class="chip" onclick="filterCat('electronics',null,this)">📱 Electronics</div>
+   <div class="chip" onclick="filterCat('shoes',null,this)">👟 Shoes</div>
+   <div class="chip" onclick="filterCat('furniture',null,this)">🪑 Furniture</div>
+   <div class="chip" onclick="filterCat('beauty',null,this)">💄 Beauty</div>
+   <div class="chip" onclick="filterCat('books',null,this)">📚 Books</div>
+   <div class="chip" onclick="filterCat('sports',null,this)">⚽ Sports</div>
+   <div class="chip" onclick="filterCat('toys',null,this)">🧸 Toys</div>
+   <div class="chip" onclick="filterCat('grocery',null,this)">🥑 Grocery</div>
+   <div class="chip" onclick="filterCat('automotive',null,this)">🚗 Auto</div>
+  </div>
+
+  <div class="sec-head">
+   <span class="sec-ttl">⚡ Hot Deals</span>
+   <span class="see-all" onclick="filterCat('deal')">See all →</span>
+  </div>
+  <div class="deals-strip" id="dealsStrip"></div>
+
+  <div class="sec-head">
+   <span class="sec-ttl" id="pgTitle">🛍️ All Products</span>
+   <span class="sec-ttl" id="pgCnt" style="font-size:14px;color:var(--dim);font-weight:500"></span>
+  </div>
+  <div class="pgrid" id="pgrid"></div>
+ </main>
+</div>
+
+<!-- COMPARE BAR -->
+<div class="compare-bar" id="compareBar">
+ <div style="font-size:13px;font-weight:700;white-space:nowrap;color:var(--accent2)">⚖️ Compare</div>
+ <div class="compare-items" id="compareItems"></div>
+ <button class="cmp-go" onclick="openCompareModal()">Compare Now →</button>
+ <button class="cmp-clear" onclick="clearCompare()">Clear</button>
+</div>
+
+<!-- COMPARE MODAL -->
+<div class="modal-overlay" id="compareModal" onclick="if(event.target===this)closeCompareModal()">
+ <div class="modal">
+  <div class="modal-hdr">
+   <h2>🔬 AI Product Comparison</h2>
+   <button class="modal-close" onclick="closeCompareModal()">✕</button>
+  </div>
+  <div id="compareContent"></div>
+ </div>
+</div>
+
+<!-- CART -->
+<div class="cart-ov" id="cartOv" onclick="closeCart()"></div>
+<div class="cart-panel" id="cartPanel">
+ <div class="cart-hdr">
+  <h3>🛒 Cart</h3>
+  <button class="cart-close" onclick="closeCart()">✕</button>
+ </div>
+ <div class="cart-items" id="cartItems"></div>
+ <div class="cart-foot" id="cartFoot"></div>
+</div>
+
+<footer>
+ <div class="footer-inner">
+  <div class="fc"><h4>Smart Intelligence</h4><a href="#">About</a><a href="#">AI Tech</a><a href="#">Careers</a></div>
+  <div class="fc"><h4>Features</h4><a href="#">Vector Search</a><a href="#">AI Compare</a><a href="#">Smart Picks</a></div>
+  <div class="fc"><h4>Help</h4><a href="#">Orders</a><a href="#">Returns</a><a href="#">Support</a></div>
+  <div class="fc"><h4>Categories</h4><a href="#">Electronics</a><a href="#">Fashion</a><a href="#">Beauty</a></div>
+ </div>
+ <div class="footer-bot">🧠 <strong>Smart Intelligence</strong> — On-Device Vector AI Shopping · TF-IDF + Cosine Similarity · No External API · © 2025</div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
