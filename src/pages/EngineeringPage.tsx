@@ -34,6 +34,22 @@ export default function EngineeringPage() {
         Web Vitals and actual downloaded bundle sizes. Re-measured on every visit; nothing is hardcoded.
       </p>
 
+      <section className="ai-box" aria-labelledby="architecture-title" style={{ marginBottom: 24 }}>
+        <div className="ai-title"><span className="ai-icon" aria-hidden="true">🧭</span><h2 id="architecture-title">Architecture decisions</h2></div>
+        <div className="pd-meta" style={{ marginTop: 14 }}>
+          <div className="pd-meta-cell"><div className="pd-meta-k">UI → state</div><div className="pd-meta-v">React components own local interaction state; Context is reserved for cart, wishlist, compare, recents, and search history shared across routes.</div></div>
+          <div className="pd-meta-cell"><div className="pd-meta-k">State → domain</div><div className="pd-meta-v">URL parameters are the catalog source of truth for search, filters, sort, and pagination, making views refreshable and shareable.</div></div>
+          <div className="pd-meta-cell"><div className="pd-meta-k">Domain → data</div><div className="pd-meta-v">Search and recommendations are deterministic modules over the real catalog; the optional Amazon client is isolated behind a server-side proxy.</div></div>
+          <div className="pd-meta-cell"><div className="pd-meta-k">Why this stack</div><div className="pd-meta-v">React + TypeScript + Vite provides composable UI, typed boundaries, fast development, and route-level code splitting without mixing frameworks.</div></div>
+        </div>
+      </section>
+
+      <section className="ai-box" aria-labelledby="algorithm-title" style={{ marginBottom: 24 }}>
+        <div className="ai-title"><span className="ai-icon" aria-hidden="true">∑</span><h2 id="algorithm-title">Search algorithm and tradeoffs</h2></div>
+        <p className="ai-sub" style={{ marginBottom: 8 }}>The flow is TF-IDF vectorization → cosine similarity → ranking → facet filtering → sorting → pagination. Index construction and filtering are linear in the catalog size for this client-side implementation; query scoring compares the query vector with indexed documents. This is appropriate for the current bundled catalog and keeps behavior inspectable.</p>
+        <p className="ai-sub" style={{ marginBottom: 0 }}>A larger catalog could move indexing to a Web Worker or server endpoint. That tradeoff is preferable to adding a state or UI framework solely for scale that the current product does not need.</p>
+      </section>
+
       <h2 className="sec-ttl" style={{ fontSize: 16 }}>Data & engine</h2>
       <div className="metric-grid">
         <div className="metric-card">

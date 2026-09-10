@@ -77,23 +77,37 @@ export default function HomePage({ vdb, products }: { vdb: SmartVectorDB; produc
       <section className="hero">
         <div className="hero-inner">
           <div className="hero-txt">
-            <div className="eyebrow"><span className="eyebrow-dot"></span>VECTOR DATABASE AI ENGINE</div>
-            <h1>Shopping <span className="hl">Smarter</span><br />Than Ever Before</h1>
+            <div className="eyebrow"><span className="eyebrow-dot"></span>PRODUCT DISCOVERY FRONTEND</div>
+            <h1>Find the right product with <span className="hl">evidence</span></h1>
             <p>
-              Smart Intelligence uses a local TF-IDF vector database with cosine similarity to
-              understand exactly what you're looking for — fully on-device AI, no external API
-              for catalog search.
+              Smart Intelligence turns natural-language shopping intent into transparent filters,
+              ranked catalog results, and explainable comparisons. Search is powered by a local
+              TF-IDF vector index, so the core experience works without an external AI API.
             </p>
             <div className="hero-btns">
-              <a href="#ai-panel" className="btn-primary">Try AI Search ✨</a>
-              <Link to="/catalog?tag=deal" className="btn-ghost">Today's Deals ⚡</Link>
+              <Link to="/catalog" className="btn-primary">Explore Catalog</Link>
+              <Link to="/engineering" className="btn-ghost">View Engineering</Link>
             </div>
           </div>
           <div className="hero-stats">
-            <div className="hstat"><div className="hstat-n">300+</div><div className="hstat-l">Products</div></div>
-            <div className="hstat"><div className="hstat-n">10</div><div className="hstat-l">Categories</div></div>
+            <div className="hstat"><div className="hstat-n">{products.length}</div><div className="hstat-l">Catalog products</div></div>
+            <div className="hstat"><div className="hstat-n">{new Set(products.map((p) => p.category)).size}</div><div className="hstat-l">Categories</div></div>
             <div className="hstat"><div className="hstat-n">TF-IDF</div><div className="hstat-l">Vector DB</div></div>
             <div className="hstat"><div className="hstat-n">100%</div><div className="hstat-l">On-Device</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="ai-panel" aria-labelledby="product-problem-title">
+        <div className="ai-box" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 10 }}>THE PRODUCT PROBLEM</div>
+            <h2 id="product-problem-title" style={{ fontFamily: 'Outfit', fontSize: 22, marginBottom: 8 }}>Discovery should not require perfect keywords.</h2>
+            <p className="ai-sub" style={{ marginBottom: 0 }}>Catalogs expose thousands of attributes, but shoppers usually describe intent in everyday language. Smart Intelligence keeps that translation visible instead of hiding it behind a black-box result.</p>
+          </div>
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 10 }}>THE FRONTEND SOLUTION</div>
+            <p className="ai-sub" style={{ marginBottom: 0 }}>A URL-driven React interface connects search, filters, pagination, product detail, comparison, and cart state. Every important action has a loading, empty, error, or success state.</p>
           </div>
         </div>
       </section>
@@ -177,6 +191,11 @@ export default function HomePage({ vdb, products }: { vdb: SmartVectorDB; produc
         {recentProducts.length > 0 && (
           <Rail title="👀 Recently viewed" subtitle="Continue where you left off" items={recentProducts.map((p) => ({ product: p, reason: `You viewed this ${p.category} item recently` }))} onAdd={addToCart} />
         )}
+        <section className="ai-box" aria-labelledby="architecture-title" style={{ margin: '8px 0 30px' }}>
+          <div className="ai-title"><span className="ai-icon" aria-hidden="true">⚙</span><h2 id="architecture-title">How the frontend is engineered</h2></div>
+          <p className="ai-sub">React components render the interaction, Context stores only genuinely shared client state, domain modules rank and filter real catalog data, and the API client isolates optional live data. Visit the Engineering page for browser measurements and implementation tradeoffs.</p>
+          <Link to="/engineering" className="btn-ghost">Open engineering notes →</Link>
+        </section>
       </div>
     </>
   );
