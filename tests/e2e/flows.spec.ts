@@ -90,3 +90,40 @@ test('FLOW 4: NL search interpretation', async ({ page }) => {
     }
   }
 });
+
+/**
+ * FLOW 5 — Mobile catalog → open filter drawer → apply a filter → close drawer.
+ */
+test('FLOW 5: mobile filter drawer', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/catalog');
+
+  const openFilters = page.getByRole('button', { name: /open filters/i });
+  await expect(openFilters).toBeVisible();
+  await openFilters.click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+
+  const rating = page.getByRole('dialog').locator('input[name="rating"]').first();
+  await rating.click({ noWaitAfter: true });
+  await expect(page).toHaveURL(/rating=/);
+  await expect(page.getByRole('dialog')).toBeHidden();
+});
+
+/**
+ * FLOW 6 — Live API failure → user-safe error state → retry remains available.
+ */
+test('FLOW 6: live API failure recovery', async ({ page }) => {
+  await page.route('**/api/amazonLive**', async (route) => {
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Live data is not configured for this deployment.' }),
+    });
+  });
+  await page.goto('/live');
+  await page.getByRole('textbox', { name: 'Amazon search query' }).fill('wireless headphones');
+  await page.getByRole('button', { name: /search amazon/i }).click();
+
+  await expect(page.getByRole('alert')).toContainText('Live data is not configured');
+  await expect(page.getByRole('alert').getByRole('button', { name: /retry/i })).toBeVisible();
+});
